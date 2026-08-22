@@ -1,0 +1,33 @@
+ago 23 01:03:59 mobian kernel: remoteproc remoteproc0: handling crash #112 in slpi
+ago 23 01:03:59 mobian kernel: remoteproc remoteproc0: recovering slpi
+ago 23 01:03:59 mobian kernel: remoteproc remoteproc0: stopped remote processor slpi
+ago 23 01:03:59 mobian kernel: remoteproc remoteproc0: remote processor slpi is now up
+ago 23 01:03:59 mobian kernel: qcom,fastrpc 2400000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: no reserved DMA memory for FASTRPC
+ago 23 01:03:59 mobian kernel: platform 2400000.remoteproc:glink-edge:fastrpc:compute-cb@1: Adding to iommu group 20
+ago 23 01:03:59 mobian kernel: platform 2400000.remoteproc:glink-edge:fastrpc:compute-cb@2: Adding to iommu group 22
+ago 23 01:03:59 mobian kernel: platform 2400000.remoteproc:glink-edge:fastrpc:compute-cb@3: Adding to iommu group 23
+ago 23 01:04:14 mobian sudo[5777]:   mobian : TTY=pts/0 ; PWD=/home/mobian ; USER=root ; COMMAND=/usr/bin/journalctl -f
+ago 23 01:04:14 mobian sudo[5777]: pam_unix(sudo:session): session opened for user root(uid=0) by mobian(uid=1000)
+ago 23 01:04:17 mobian sudo[5787]:   mobian : TTY=pts/1 ; PWD=/home/mobian ; USER=root ; COMMAND=/usr/bin/systemctl restart hexagonrpcd
+ago 23 01:04:17 mobian sudo[5787]: pam_unix(sudo:session): session opened for user root(uid=0) by mobian(uid=1000)
+ago 23 01:04:17 mobian systemd[1]: Started hexagonrpcd.service - Hexagon DSP sensors daemon.
+ago 23 01:04:17 mobian sudo[5787]: pam_unix(sudo:session): session closed for user root
+ago 23 01:04:17 mobian kernel: arm-smmu 15000000.iommu: Unhandled context fault: fsr=0x402, iova=0x1fffff000, fsynr=0x780001, cbfrsynra=0x5a1, cb=18
+ago 23 01:04:17 mobian kernel: arm-smmu 15000000.iommu: FSR    = 00000402 [Format=2 TF], SID=0x5a1
+ago 23 01:04:17 mobian kernel: arm-smmu 15000000.iommu: FSYNR0 = 00780001 [S1CBNDX=120 PLVL=1]
+ago 23 01:04:17 mobian kernel: PDM: service 'sensor_process' crash: 'EX:sensor_process:0x1:frpck_0_0:0x59:PC=0xb218b1c8'
+ago 23 01:04:17 mobian kernel: qcom_q6v5_pas 2400000.remoteproc: fatal error received: err_qdi.c:964:EX:sensor_process:0x1:frpck_0_0:0x59:PC=0xb218b1c8
+ago 23 01:04:17 mobian kernel: remoteproc remoteproc0: crash detected in slpi: type fatal error
+ago 23 01:04:17 mobian systemd[1]: hexagonrpcd.service: Main process exited, code=exited, status=4/NOPERMISSION
+ago 23 01:04:17 mobian hexagonrpcd[5802]: Could not attach to FastRPC node: Broken pipe
+ago 23 01:04:17 mobian hexagonrpcd[5802]: Starting /usr/libexec/hexagonrpc/hexagonrpcd (INIT_ATTACH_SNS) on /dev/fastrpc-sdsp
+ago 23 01:04:17 mobian kernel: remoteproc remoteproc0: handling crash #113 in slpi
+ago 23 01:04:17 mobian systemd[1]: hexagonrpcd.service: Failed with result 'exit-code'.
+ago 23 01:04:17 mobian kernel: qcom_q6v5_pas 2400000.remoteproc: Handover signaled, but it already happened
+ago 23 01:04:17 mobian kernel: remoteproc remoteproc0: recovering slpi
+ago 23 01:04:17 mobian kernel: remoteproc remoteproc0: stopped remote processor slpi
+ago 23 01:04:17 mobian kernel: remoteproc remoteproc0: remote processor slpi is now up
+ago 23 01:04:17 mobian kernel: qcom,fastrpc 2400000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: no reserved DMA memory for FASTRPC
+ago 23 01:04:17 mobian kernel: platform 2400000.remoteproc:glink-edge:fastrpc:compute-cb@1: Adding to iommu group 20
+ago 23 01:04:17 mobian kernel: platform 2400000.remoteproc:glink-edge:fastrpc:compute-cb@2: Adding to iommu group 22
+ago 23 01:04:17 mobian kernel: platform 2400000.remoteproc:glink-edge:fastrpc:compute-cb@3: Adding to iommu group 23
