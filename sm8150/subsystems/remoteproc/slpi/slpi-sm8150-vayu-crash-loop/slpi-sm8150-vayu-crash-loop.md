@@ -40,3 +40,6 @@ mobian hexagonrpcd[3433]: Could not attach to FastRPC node: Broken pipe
 mobian hexagonrpcd[3433]: Starting /usr/libexec/hexagonrpc/hexagonrpcd (INIT_ATTACH_SNS) on /dev/fastrpc-sdsp
 mobian systemd[1]: hexagonrpcd.service: Main process exited, code=exited, status=4/NOPERMISSION
 ```
+
+## 1-2-2. Journal from hexagonrcd restart
+Output from journal -f on hexagonrcd daemon restart: [Link to log](logs/journal-hexagonrpcd-restart_baseline.log)
