@@ -43,3 +43,32 @@ mobian systemd[1]: hexagonrpcd.service: Main process exited, code=exited, status
 
 ## 1-2-2. Journal from hexagonrcd restart
 Output from journal -f on hexagonrcd daemon restart: [Link to log](logs/journal-hexagonrpcd-restart_baseline.log)
+
+
+## 2. Analysis
+The main clue might be this message logged in the journal, when the hexagonrpc daemon tries to attach to the fastrpc-sdsp device (look al the linked log in the 1-2-2 section):
+```text
+mobian kernel: arm-smmu 15000000.iommu: Unhandled context fault: fsr=0x402, iova=0x1fffff000, fsynr=0x780001, cbfrsynra=0x5a1, cb=18
+```
+
+This suggests that the SDSP tries to access to an unallocated IOVA in the SMMU.
+
+### 2-1. DMA adresses in fastrpc driver
+There are two different concepts in the fastrpc driver related to the DMA addresses.
+
+### 2-1-1. Raw IOVA
+It's the standar DMA virtual address used for the operations over the SMMU.
+
+There are two different types:
+- The coherent raw IOVA, related to the dma buffer allocation.
+- The sg raw IOVA, related to the dma buffer mapping.
+ 
+Each type has its dma mask, an integer value which determines the number of bits for the address range:
+- The coherent_dma_mask, which is used to determine the coherent IOVA. 
+- The dma_mask, which is used to determine the sg IOVA.
+
+### 2-1-2. Computed IOVA
+The fastrpc driver also defines a computed (or consolidated) DMA address, by adding the SID offset bits to the raw IOVA in the higher address bits, and it's the address sent to the DSP.
+The SID offset is used to know the correct context bak.
+
+The next step would be to add some extra debug to the fastrpc driver for tracing the IOVA addresses and DMA masks.
