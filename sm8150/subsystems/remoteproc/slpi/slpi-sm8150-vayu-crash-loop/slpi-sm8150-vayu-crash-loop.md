@@ -8,7 +8,7 @@ On Xiaomi vayu device (sm8150 SoC) using Linux mainline, the SLPI firmware doesn
 
 Instead, it enters in a crash loop cycle every 40 seconds.
 
-## 1-1. Without hexagonrpcd daemon
+### 1-1. Without hexagonrpcd daemon
 In the initial tests, without the hexagonrpcd daemon running, the symthoms in the logs were:
 ``` text
 mobian kernel: qcom_q6v5_pas 2400000.remoteproc: fatal error received: err_qdi.c:964:EF:sensor_process:0x1:TMR_CLNT_1:0x80:dog_virtual_user.c:240:USER-PD DOG detects stalled initialization, triage with IMAGE OWNER
@@ -30,10 +30,10 @@ cat /sys/class/remoteproc/remoteproc0/state
 running-->crashed-->offline-->running-->...
 ```
 
-## 1-2. With hexagonrpcd daemon
+### 1-2. With hexagonrpcd daemon
 After installing hexagonrpcd, the crash sequence persists with the same symthoms in the logs.
 
-## 1-2-1. Check hexagonrpcd status
+#### 1-2-1. Check hexagonrpcd status
 ```text
 mobian systemd[1]: Started hexagonrpcd.service - Hexagon DSP sensors daemon.
 mobian hexagonrpcd[3433]: Could not attach to FastRPC node: Broken pipe
@@ -41,7 +41,7 @@ mobian hexagonrpcd[3433]: Starting /usr/libexec/hexagonrpc/hexagonrpcd (INIT_ATT
 mobian systemd[1]: hexagonrpcd.service: Main process exited, code=exited, status=4/NOPERMISSION
 ```
 
-## 1-2-2. Journal from hexagonrcd restart
+#### 1-2-2. Journal from hexagonrcd restart
 Output from journal -f on hexagonrcd daemon restart: [Link to log](logs/journal-hexagonrpcd-restart_baseline.log)
 
 
@@ -56,7 +56,7 @@ This suggests that the SDSP tries to access to an unallocated IOVA in the SMMU.
 ### 2-1. DMA adresses in fastrpc driver
 There are two different concepts in the fastrpc driver related to the DMA addresses.
 
-### 2-1-1. Raw IOVA
+#### 2-1-1. Raw IOVA
 It's the standar DMA virtual address used for the operations over the SMMU.
 
 There are two different types:
@@ -67,18 +67,18 @@ Each type has its dma mask, an integer value which determines the number of bits
 - The coherent_dma_mask, which is used to determine the coherent IOVA. 
 - The dma_mask, which is used to determine the sg IOVA.
 
-### 2-1-2. Computed IOVA
+#### 2-1-2. Computed IOVA
 The fastrpc driver also defines a computed (or consolidated) DMA address, by adding the SID offset bits to the raw IOVA in the higher address bits, and it's the address sent to the DSP.
 The SID offset is used to know the correct context bak.
 
 The next step would be to add some extra debug to the fastrpc driver for tracing the IOVA addresses and DMA masks.
 
-## 2-2. Extended debug in mainline fastrpc driver
+### 2-2. Extended debug in mainline fastrpc driver
 A new branch is created in the kernel tree for the issue debug and test: [mobian-sm8150-7.1.0-vayu-slpi-crash-debug](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/tree/mobian-sm8150-7.1.0-vayu-slpi-crash-debug)
 
 The first commit [1f0507153e1e0b972182c3baabda825a640562d3](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/1f0507153e1e0b972182c3baabda825a640562d3) adds extra debug to the fastrpc driver as info prints (FASTRPC-INFO) to see the effective DMA addresses and masks when hexagonrpcd attaches to the fastrpc-sdsp device.
 
-### 2-2-1. Analyis from collected clues from logs on mainline baseline
+#### 2-2-1. Analyis from collected clues from logs on mainline baseline
 When the hexagonrpc daemon tries to attach to the fastrpc-sdsp device, the extra debug in the fastrpc driver shows this information in the journal log:
 ```text
 mobian kernel: qcom,fastrpc-cb 2400000.remoteproc:glink-edge:fastrpc:compute-cb@1: FASTRPC-INFO: coherent-dma-addr=0x00000000fffff000 coherent-dma-mask=0xffffffff dma-mask=0xffffffff
@@ -91,7 +91,7 @@ By other hand, the computed address (by fastrpc driver) is in the 33 bits range 
 
 So the computed address matches exactly with the IOVA in the "Unhandled context fault" from the journal on the hexagonrpcd attach.
 
-## 2-3 Mainline fastrppc driver
+### 2-3 Mainline fastrppc driver
 The mainline fastrpc driver defines the computed address after the DMA buffer allocation happens.
 
 And the computed address is sent to the DSP (as &msg->addr), which seems neccesary for the DSP to know the context bank.
@@ -107,7 +107,7 @@ Does this might suggest that the SDSP firmware should strip the SID offset and u
 The second question seems to have an answer in the sm8150/vayu downstream's adsprpc driver.
 
 
-## 2-4. Downstream adsprpc driver: SDSP hardware bug workaround
+### 2-4. Downstream adsprpc driver: SDSP hardware bug workaround
 To understand what should be the fastrpc driver behaviour, the equivalent driver in downstream was analyzed: [adsprc.c from Xiaomi vayu downstream](https://github.com/MiCode/Xiaomi_Kernel_OpenSource/blob/vayu-r-oss/drivers/char/adsprpc.c)
 
 It's especially revealing a workaround in the downstream driver for the sdsp domain to deal with a "HW bug" in the SMMU interconnect:
