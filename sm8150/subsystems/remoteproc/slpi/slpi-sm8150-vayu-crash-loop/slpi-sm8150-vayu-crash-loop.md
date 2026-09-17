@@ -132,4 +132,67 @@ static int fastrpc_cb_probe(struct device *dev)
 
 For the SDSP domain, the sid offset is added to the raw IOVA before the buffer allocation, and the dma mask is set to 34, so the raw IOVA contains the SID offset (equivalent to the "computed address" in the mainline fastrpc driver).
 
-The next step is try to implement the downtream's SDSP bug workaround in the mainline fastrpc driver.
+### 2-5. Relevant conclusons from the analysis
+Before proceed to port the fix there are some relevat points to think about.
+
+#### 2-5-1. Context banks and DMA mask
+There are three context banks for the SDSP domain, defined in the sm8150 DT for both downtream and mainline: cb@1, cb@2 and cb@3.
+
+##### 2-5-1-1. Context banks
+There are three context banks for the SDSP domain defined in the sm8150 DT for both downtream and uptream: cb@1, cb@2 and cb@3.
+
+In the upstream (Mobian) logs:
+```text
+[   44.647655] platform 2400000.remoteproc:glink-edge:fastrpc:compute-cb@1: Adding to iommu group 26
+[   44.659891] platform 2400000.remoteproc:glink-edge:fastrpc:compute-cb@2: Adding to iommu group 27
+[   44.668652] platform 2400000.remoteproc:glink-edge:fastrpc:compute-cb@3: Adding to iommu group 28
+```
+
+##### 2-5-1-2. DMA mask
+The hexagonrpc daemon uses the cb@1 to attach to the fastrpc-sdsp device, and the computed virtual address (by fastrpc driver) is on top of the 33 bits range.
+
+For cb@1, only the bit 32 is relevant (dma mask 33).
+
+For cb's 2 and 3, the bit 33 (dma mask = 34) is required, which is the hardcoded mask in the downstream's exception for the SDSP domain.
+
+In the upstream scenario, the address start range for cb@1 is 0x100000000 (bit 32), and for cb@2 and cb@3 should be 0x200000000 and 0x300000000 respectively (bits 33:32).
+
+
+## 3. SDSP bug workaround in mainline
+The next step is try to implement the downtream's SDSP bug workaround in the upstream fastrpc driver.
+
+### 3-1. Required mechanisms
+The necessary pieces are:
+
+#### 3-1-1. Guarded soc_data
+A mechanism in the fastrpc driver to set a custom soc_data table guarded for specific SoC (sm8150) and speific domain (sdsp).
+
+The guard mechanism implemenation is based on the existing multiple soc_data architecture in the fastrpc driver.
+
+The idea is taken from the Kaanapali SoC workaround in the upstream commits:
+- 1d94ce8996d71d77e2d649db9e5c205f423e2c17 "misc: fastrpc: Add support for new DSP IOVA formatting"
+- 8314d2c28d3369bc879af8e848f810292b16d0af "misc: fastrpc: Update dma_bits for CDSP support on Kaanapali SoC"
+
+A new soc_data table is created to use custom soc data values only for the sm8150 SoC and sdsp domain.
+
+This also requires to change/override the fastrpc compatible (qcom,sm8150-sdsp-fastrpc) in the slpi remoteproc node in the DT.
+
+Implemented in commit [3906ad8b8191db72a26256e090fbef1320a1cb94](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/3906ad8b8191db72a26256e090fbef1320a1cb94)
+
+#### 3-1-2. Custom coherent dma mask
+A mechanism in the fastrpc driver to modify the coherent dma mask, since it affects to the allocation IOVA.
+The idea is to force a 33 or 34 bits IOVA for the buffer allocation.
+
+The approach used is based on the already existing dma_bits and dma_set_mask implementation. The main involved components are:
+- dma_addr_coherent_bits_default: New constant equivalent to dma_addr_bits_default. It's defined in the soc_data with the mask value.
+ - dma_coherent_bits: New variable equivalent to dma_bits.
+- dma_set_coherent_mask: Function call to set the coherent mask using the dma_coherent_bits value for the dma buffer allocation.
+
+The dma_bits could be used for the dma_set_coherent_mask instead the extra dma_coherent_bits introduction, but i guess is preferred to have them with independent assignements, at least for now.
+
+Implemented in commit [99c07ab0efaf84c5535095340f21d63ef69d7ca9](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/99c07ab0efaf84c5535095340f21d63ef69d7ca9)
+
+#### 3-1-3. Skip computed iova
+Mechanism to allow not adding the sid offset to the dma address sent to the DSP.
+
+Implemented in commit [230ceac790b33091fdd3c2e8a218e1b670dcb186](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/230ceac790b33091fdd3c2e8a218e1b670dcb186)
