@@ -195,4 +195,8 @@ Implemented in commit [99c07ab0efaf84c5535095340f21d63ef69d7ca9](https://github.
 #### 3-1-3. Skip computed iova
 Mechanism to allow not adding the sid offset to the dma address sent to the DSP.
 
+The implemntation consists on return the raw IOVA for the coherent and sg addresses as computed addresses, by skipping the add sid offset in the "fastrpc_buf_alloc" and "fastrpc_compute_dma_addr" functions when the introduced variable "no_sid_offset" is set to "true" in the soc_data.
+
+Also the reversed IOVA is skipped in the "dma_addr_t fastrpc_ipa_to_dma_addr" function, returning the IOVA as-is, also based on the no_sid_offset variable. This is required for some operations like free the address.
+
 Implemented in commit [230ceac790b33091fdd3c2e8a218e1b670dcb186](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/230ceac790b33091fdd3c2e8a218e1b670dcb186)
