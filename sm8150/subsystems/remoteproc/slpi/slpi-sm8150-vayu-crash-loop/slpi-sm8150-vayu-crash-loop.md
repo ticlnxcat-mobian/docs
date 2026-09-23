@@ -200,3 +200,36 @@ The implemntation consists on return the raw IOVA for the coherent and sg addres
 Also the reversed IOVA is skipped in the "dma_addr_t fastrpc_ipa_to_dma_addr" function, returning the IOVA as-is, also based on the no_sid_offset variable. This is required for some operations like free the address.
 
 Implemented in commit [230ceac790b33091fdd3c2e8a218e1b670dcb186](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/230ceac790b33091fdd3c2e8a218e1b670dcb186)
+
+
+### 3-2. Tests
+This sub-section documents the tests based in the implemented mechanisms.
+
+#### 3-2-1. Test-1: Enable the skip computed iova mechanism
+This test just enables the "no_sid_offset" variable in the "sm8150_sdsp_soc_data" to test the implementation and observe the dma addresses with the default coherent and sg dma masks (32 bits).
+
+Implemented in commit [6e025cb0bd1f7695dae4d0ac13fee11be9315068](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/6e025cb0bd1f7695dae4d0ac13fee11be9315068)
+
+This test just enables the "no_sid_offset" variable in the "sm8150_sdsp_soc_data" to test the implementation and observe the dma addresses with the default coherent and sg dma masks (32 bits).
+
+The involved commits are:
+- 3-1-1. Guarded soc_data [3906ad8b8191db72a26256e090fbef1320a1cb94](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/3906ad8b8191db72a26256e090fbef1320a1cb94)
+- 3-1-3. Skip computed iova [230ceac790b33091fdd3c2e8a218e1b670dcb186](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/230ceac790b33091fdd3c2e8a218e1b670dcb186)
+- 3-2-1. Enable no_sid_offset variable [6e025cb0bd1f7695dae4d0ac13fee11be9315068](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/6e025cb0bd1f7695dae4d0ac13fee11be9315068)
+
+#### 3-2-2. Result Test-1
+This test confirms that custom sm8150_sdsp_soc_data and the "no_sid_offset" mechanism are working.
+
+The coherent address for the dma allocation now matches to the computed address (the one sent to the DSP).
+
+However, the hexagonrpcd attachment to the fastrpc-sdsp device, causes a hard system hang.
+
+In the pstore log:
+```text
+[   55.673398] qcom,fastrpc-cb 2400000.remoteproc:glink-edge:fastrpc:compute-cb@1: FASTRPC-INFO: coherent-dma-addr=0x00000000fffff000 coherent-dma-mask=0xffffffff dma-mask=0xffffffff
+[   55.673540] qcom,fastrpc-cb 2400000.remoteproc:glink-edge:fastrpc:compute-cb@1: FASTRPC-INFO: computed-coherent-dma-addr=0x00000000fffff000
+```
+
+This might suggest that the dma address range for the context bank 1 (cb@1) expected by the SDSP should be in the 33 bits, the computed range (0x00000001fffff000).
+
+For the next test, the dma masks will be set to 33 bits. This would cover only the context bank 1, but probably it's enough to test the theory.
