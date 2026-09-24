@@ -288,3 +288,30 @@ Also there arn't more errors for "Unhandled context"
 I don't know if the CBs 2 and 3 might be required for other scenarios, but they should require a 34 bts mask (the mask used by the downstream adsprpc driver) to use the correct dma address ranges (0x200000000 and 0x300000000).
 
 The next test will be setting the dma masks to 34 to observe the behaviour.
+
+
+#### 3-2-4. Test-3: DMA masks 34 + Enable the skip computed iova mechanism
+This test combines "3-2-2. Test-1" with dma masks set to 34.
+
+The involved commits are:
+- 3-1-1. Guarded soc_data [3906ad8b8191db72a26256e090fbef1320a1cb94](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/3906ad8b8191db72a26256e090fbef1320a1cb94)
+- 3-1-2. Custom coherent dma mask [99c07ab0efaf84c5535095340f21d63ef69d7ca9](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/99c07ab0efaf84c5535095340f21d63ef69d7ca9)
+- 3-1-3. Skip computed iova [230ceac790b33091fdd3c2e8a218e1b670dcb186](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/230ceac790b33091fdd3c2e8a218e1b670dcb186)
+- 3-2-2. Enable no_sid_offset variable [6e025cb0bd1f7695dae4d0ac13fee11be9315068](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/6e025cb0bd1f7695dae4d0ac13fee11be9315068)
+- 3-2-4. Set dma masks to 34 bits [9e6f95933b590703c3156053172aac627cdd6ba1](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/9e6f95933b590703c3156053172aac627cdd6ba1)
+
+##### 3-2-4-1. Result Test-3 (FAIL cb@1)
+The test result shows that the address range used for the context bank 1 is the expected for the context bank 3 (0x300000000).
+
+This suggests that the smmu allocates the buffer in the higher virtual address range allowed by the dma mask.
+
+The log shows:
+```text
+mobian kernel: qcom,fastrpc-cb 2400000.remoteproc:glink-edge:fastrpc:compute-cb@1: FASTRPC-INFO: coherent-dma-addr=0x00000003fffff000 coherent-dma-mask=0x3ffffffff dma-mask=0x3ffffffff
+mobian kernel: qcom,fastrpc-cb 2400000.remoteproc:glink-edge:fastrpc:compute-cb@1: FASTRPC-INFO: computed-coherent-dma-addr=0x00000003fffff000
+```
+
+By other hand, the sdsp attach fails again with the "Broen pipe" error. It probably suggests that the DSP expects the 0x100000000 range for the context bank 1.
+
+So an option is to use the "3-2-3. Test-2" workaround for now, but it solves only the cb@1. The CBs 2 and 3 should fail if are required in some other scenario.
+For the hexagonrpcd it seems to be enough.
