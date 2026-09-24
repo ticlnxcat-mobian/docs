@@ -205,7 +205,29 @@ Implemented in commit [230ceac790b33091fdd3c2e8a218e1b670dcb186](https://github.
 ### 3-2. Tests
 This sub-section documents the tests based in the implemented mechanisms.
 
-#### 3-2-1. Test-1: Enable the skip computed iova mechanism
+#### 3-2-1. Testing methods
+
+##### 3-2-1-1. Attach and free equivalents from Linux terminal
+For some tested scenarios, the hexagonrpc attach caused a hard system hang.
+
+If the hexagonrpcd daemon is enabled when thiis scenario is found, a bootloop happens whhen the daemon is started at boot.
+
+To deal with it in a more confortable way, the daemon can be masked and do the equivalent to attach and free to the fastrpc-sdsp device uing the next bash commands sequence:
+
+- Attach equivalent:
+```bash
+exec 3<>/dev/fastrpc-sdsp
+```
+- Check that device is "attached":
+```bash
+ls -l /proc/self/fd/3
+```
+- Free equivalent:
+```bash
+exec 3>&-
+```
+
+#### 3-2-2. Test-1: Enable the skip computed iova mechanism
 This test just enables the "no_sid_offset" variable in the "sm8150_sdsp_soc_data" to test the implementation and observe the dma addresses with the default coherent and sg dma masks (32 bits).
 
 Implemented in commit [6e025cb0bd1f7695dae4d0ac13fee11be9315068](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/6e025cb0bd1f7695dae4d0ac13fee11be9315068)
@@ -215,9 +237,9 @@ This test just enables the "no_sid_offset" variable in the "sm8150_sdsp_soc_data
 The involved commits are:
 - 3-1-1. Guarded soc_data [3906ad8b8191db72a26256e090fbef1320a1cb94](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/3906ad8b8191db72a26256e090fbef1320a1cb94)
 - 3-1-3. Skip computed iova [230ceac790b33091fdd3c2e8a218e1b670dcb186](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/230ceac790b33091fdd3c2e8a218e1b670dcb186)
-- 3-2-1. Enable no_sid_offset variable [6e025cb0bd1f7695dae4d0ac13fee11be9315068](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/6e025cb0bd1f7695dae4d0ac13fee11be9315068)
+- 3-2-2. Enable no_sid_offset variable [6e025cb0bd1f7695dae4d0ac13fee11be9315068](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/6e025cb0bd1f7695dae4d0ac13fee11be9315068)
 
-#### 3-2-2. Result Test-1
+##### 3-2-2-1. Result Test-1
 This test confirms that custom sm8150_sdsp_soc_data and the "no_sid_offset" mechanism are working.
 
 The coherent address for the dma allocation now matches to the computed address (the one sent to the DSP).
