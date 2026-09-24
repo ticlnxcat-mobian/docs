@@ -255,3 +255,36 @@ In the pstore log:
 This might suggest that the dma address range for the context bank 1 (cb@1) expected by the SDSP should be in the 33 bits, the computed range (0x00000001fffff000).
 
 For the next test, the dma masks will be set to 33 bits. This would cover only the context bank 1, but probably it's enough to test the theory.
+
+#### 3-2-3. Test-2: DMA masks 33 + Enable the skip computed iova mechanism
+This test combines "3-2-2. Test-1" with dma mask to 33 intead the defauls 32.
+
+The involved commits are:
+- 3-1-1. Guarded soc_data [3906ad8b8191db72a26256e090fbef1320a1cb94](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/3906ad8b8191db72a26256e090fbef1320a1cb94)
+- 3-1-2. Custom coherent dma mask [99c07ab0efaf84c5535095340f21d63ef69d7ca9](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/99c07ab0efaf84c5535095340f21d63ef69d7ca9)
+- 3-1-3. Skip computed iova [230ceac790b33091fdd3c2e8a218e1b670dcb186](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/230ceac790b33091fdd3c2e8a218e1b670dcb186)
+- 3-2-2. Enable no_sid_offset variable [6e025cb0bd1f7695dae4d0ac13fee11be9315068](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/6e025cb0bd1f7695dae4d0ac13fee11be9315068)
+- 3-2-3. Set dma masks to 33 bits [fef4b800c14e6900cadd34cf4daacab889432c45](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/fef4b800c14e6900cadd34cf4daacab889432c45)
+
+##### 3-2-3-1. Result Test-2 (FIXED cb@1)
+First good news.
+
+This test fixed the attach/free problem.
+
+Now the hexagorpcd completes succesfully for the context bank 1, and the reverse tunnel is working as exected, serving files to the SDSP.
+
+Also te SLPI crash loop is fixed: no more reemoteproc crashes in logs for SLPI.
+
+As additional information, the extended debug shows:
+```text
+mobian kernel: qcom,fastrpc-cb 2400000.remoteproc:glink-edge:fastrpc:compute-cb@1: FASTRPC-INFO: coherent-dma-addr=0x00000001ffed6000 coherent-dma-mask=0x1ffffffff dma-mask=0x1ffffffff
+mobian kernel: qcom,fastrpc-cb 2400000.remoteproc:glink-edge:fastrpc:compute-cb@1: FASTRPC-INFO: computed-coherent-dma-addr=0x00000001ffed6000
+```
+
+There arn't errors for context banks 2 and 3, which suggests that they are not used/required by hexagonrcd.
+
+Also there arn't more errors for "Unhandled context"
+
+I don't know if the CBs 2 and 3 might be required for other scenarios, but they should require a 34 bts mask (the mask used by the downstream adsprpc driver) to use the correct dma address ranges (0x200000000 and 0x300000000).
+
+The next test will be setting the dma masks to 34 to observe the behaviour.
