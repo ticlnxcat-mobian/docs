@@ -201,6 +201,28 @@ Also the reversed IOVA is skipped in the "dma_addr_t fastrpc_ipa_to_dma_addr" fu
 
 Implemented in commit [230ceac790b33091fdd3c2e8a218e1b670dcb186](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/230ceac790b33091fdd3c2e8a218e1b670dcb186)
 
+#### 3-1-4. Shifted IOVA allocation in arm-smmu
+Add support for shifted IOVA allocation workaround.
+
+This workaround solves the problem in the Test 3 (Section 3-2-4), where the dma mask is set o 34 (like downstream) to cover the three context banks.
+
+As mentioned above, the downstream's approach for the HW bug (in the adsprpc driver) is to shift the start address by adding the sid offset to it before the dma buffer allocation.
+
+This workaround adds an equivalent approach in the uptream's arm-smmu driver.
+
+In upstream, the allocation only uses aperture_end, so the resulting IOVA is in the higher range allowed by the dma mask.
+
+For this reason, the dma mask 33 (Test 2, section 3-2-3) works for the context bank 1, but not for the 2 and 3.
+
+By other hand, the dma mask 34 sould work only for he context bank 3, and doesn't work for context banks 1 and 2 (only confirmed that fails for CB1, but should fail with  CB2 too).
+
+The implemented approach adds a new address range definition guarded by the new qcom,shifted-iova DT property (in the compute-cb@X nodes), using aperture_start = reg value from the DT (sid offset numeric value) + 32, and aperture_end = aperture_start + 32 (limiting the range to the expected for the context bank).
+
+This approach should use the correct buffer allocation IOVA for each context bank.
+
+The qcom,shifted-iova property is required in each compute-cb fastrpc subnode.
+
+Implemented in commit [978e76a7f235071d2d6dd21d5fd0da755e3f7849](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/978e76a7f235071d2d6dd21d5fd0da755e3f7849)
 
 ### 3-2. Tests
 This sub-section documents the tests based in the implemented mechanisms.
@@ -315,3 +337,29 @@ By other hand, the sdsp attach fails again with the "Broen pipe" error. It proba
 
 So an option is to use the "3-2-3. Test-2" workaround for now, but it solves only the cb@1. The CBs 2 and 3 should fail if are required in some other scenario.
 For the hexagonrpcd it seems to be enough.
+
+#### 3-2-5. Test-4: Shifted-iova support for qcom DSP HW bug
+This test combines "3-2-4. Test-3" with the shifted IOVA workaround (in arm-smmu driver)
+
+For the test, the DT property is implemented at device level (sm8150-xiaomi-vayu.dtsi) in commit [1259f09c8af9ddd6070eb0cd71e78fcaed09e834](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/1259f09c8af9ddd6070eb0cd71e78fcaed09e834)
+
+The involved commits are:
+- 3-1-1. Guarded soc_data [3906ad8b8191db72a26256e090fbef1320a1cb94](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/3906ad8b8191db72a26256e090fbef1320a1cb94)
+- 3-1-2. Custom coherent dma mask [99c07ab0efaf84c5535095340f21d63ef69d7ca9](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/99c07ab0efaf84c5535095340f21d63ef69d7ca9)
+- 3-1-3. Skip computed iova [230ceac790b33091fdd3c2e8a218e1b670dcb186](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/230ceac790b33091fdd3c2e8a218e1b670dcb186)
+- 3-2-2. Enable no_sid_offset variable [6e025cb0bd1f7695dae4d0ac13fee11be9315068](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/6e025cb0bd1f7695dae4d0ac13fee11be9315068)
+- 3-2-4. Set dma masks to 34 bits [9e6f95933b590703c3156053172aac627cdd6ba1](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/9e6f95933b590703c3156053172aac627cdd6ba1)
+- 3-1-4. Implement shifted IOVA allocation in arm-smmu [9e6f95933b590703c3156053172aac627cdd6ba1](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/9e6f95933b590703c3156053172aac627cdd6ba1)
+- 3-2-5. Add qcom,shifted-iova prop to DT's slpi fastrpc CB nodes [1259f09c8af9ddd6070eb0cd71e78fcaed09e834](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/1259f09c8af9ddd6070eb0cd71e78fcaed09e834)
+
+##### 3-2-5-1. Result Test-4 (FIXED cb@1)
+The test result shows that thee CB1 works as expected using the dma mask 34 in he sm8150_sdsp_soc_data.
+The CBs 2 and 3 are untested (not used by hexagonrpcd).
+
+The hexagonrpc daemon works as exected, serving files to the SDSP.
+
+The extended debug show:
+```text
+mobian kernel: qcom,fastrpc-cb 2400000.remoteproc:glink-edge:fastrpc:compute-cb@1: FASTRPC-INFO: coherent-dma-addr=0x00000001fff24000 coherent-dma-mask=0x3ffffffff dma-mask=0x3ffffffff
+mobian kernel: qcom,fastrpc-cb 2400000.remoteproc:glink-edge:fastrpc:compute-cb@1: FASTRPC-INFO: computed-coherent-dma-addr=0x00000001fff24000
+```
