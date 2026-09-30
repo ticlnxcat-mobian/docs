@@ -3,6 +3,15 @@
 ## 0. Environment
 Mobian forky on Linux stable 7.0.1
 
+## 0-A. LLM Transparency advice
+LLMs were used to analyze, find and understand the relevant parts of the involved code.
+
+Also LLMs were used as support for the workarounds implementation, since i'm not an expert in C coding and drivers development.
+
+However, i fully wrote this document and the commit messages myself based on my understanding and conclusions after several weeks of study and analysis using the mentioned LLMs.
+
+The different pieces of code (commits) that make up the full workaround, are not a "magical" one step solution from LLMs. Each piece is the result of personal effort and dedicated hours to direct the analyis and each piece, and to make the code modifications as minor, precise, clean and integrated as posible.
+
 ## 1. Initial observations
 On Xiaomi vayu device (sm8150 SoC) using Linux mainline, the SLPI firmware doesn't finish its initialization process.
 
