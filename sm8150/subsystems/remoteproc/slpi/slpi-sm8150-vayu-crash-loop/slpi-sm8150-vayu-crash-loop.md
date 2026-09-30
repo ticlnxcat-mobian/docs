@@ -74,7 +74,7 @@ The SID offset is used to know the correct context bak.
 The next step would be to add some extra debug to the fastrpc driver for tracing the IOVA addresses and DMA masks.
 
 ### 2-2. Extended debug in mainline fastrpc driver
-A new branch is created in the kernel tree for the issue debug and test: [mobian-sm8150-7.1.0-vayu-slpi-crash-debug](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/tree/mobian-sm8150-7.1.0-vayu-slpi-crash-debug)
+A new branch is created in the kernel tree for the issue debug and test: [mobian-sm8150-7.1.0-vayu-slpi-crash-debug](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/tree/mobian-sm8150-7.1.0-vayu-fix-slpi-WIP)
 
 The first commit [1f0507153e1e0b972182c3baabda825a640562d3](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/commit/1f0507153e1e0b972182c3baabda825a640562d3) adds extra debug to the fastrpc driver as info prints (FASTRPC-INFO) to see the effective DMA addresses and masks when hexagonrpcd attaches to the fastrpc-sdsp device.
 
@@ -158,8 +158,10 @@ For cb's 2 and 3, the bit 33 (dma mask = 34) is required, which is the hardcoded
 In the upstream scenario, the address start range for cb@1 is 0x100000000 (bit 32), and for cb@2 and cb@3 should be 0x200000000 and 0x300000000 respectively (bits 33:32).
 
 
-## 3. SDSP bug workaround in mainline
+## 3. SDSP bug workaround in mainline (WIP Branch: Initial version)
 The next step is try to implement the downtream's SDSP bug workaround in the upstream fastrpc driver.
+
+The branch for the initial implementation and tests is [mobian-sm8150-7.1.0-vayu-fix-slpi-WIP](https://github.com/ticlnxcat-mobian/linux-mobian-sm8150-stable/tree/mobian-sm8150-7.1.0-vayu-fix-slpi-WIP)
 
 ### 3-1. Required mechanisms
 The necessary pieces are:
